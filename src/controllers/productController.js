@@ -21,57 +21,38 @@ const getProductById = async (req, res) => {
     }
 };
 
-
-
-
-// Multer storage configuration
-
-// Set up storage configuration for Multer
-
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "uploads/"); // Save images to the 'uploads' folder
+        cb(null, "uploads/");
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Unique file name with extension
+        cb(null, Date.now() + "-" + file.originalname);
     }
 });
-
 // Create Multer instance with storage configuration
 const upload = multer({ storage: storage });
-
-
-
-
-
  const createProduct = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: "Image is required." });
         }
-
         const { product_name, description, price, size, cate_id } = req.body;
-
         if (!product_name || !description || !price || !size || !cate_id) {
             return res.status(400).json({ error: "All fields are required." });
         }
-
         if (isNaN(price) || parseFloat(price) <= 0) {
             return res.status(400).json({ error: "Price must be a valid positive number." });
         }
-
         // Chuyển cate_id sang số nguyên
         const categoryId = parseInt(cate_id, 10);
         if (isNaN(categoryId)) {
             return res.status(400).json({ error: "Category ID must be a valid number." });
         }
-
         // Kiểm tra danh mục có tồn tại không
         const categoryExists = await Product.categoryExists(categoryId);
         if (!categoryExists) {
             return res.status(400).json({ error: "Danh mục không tồn tại!" });
         }
-
         // Lưu sản phẩm vào database
         const productData = {
             product_name,
@@ -79,11 +60,9 @@ const upload = multer({ storage: storage });
             price: parseFloat(price),
             size,
             cate_id: categoryId,
-            image: req.file.path,
+            image: req.file ? req.file.filename : "",
         };
-
         const productId = await Product.create(productData);
-
         res.status(201).json({ id: productId, message: "Product created successfully" });
     } catch (error) {
         console.error(error);
@@ -94,13 +73,32 @@ const upload = multer({ storage: storage });
 
 const updateProduct = async (req, res) => {
     try {
-        const { product_name, image, description, price, size, cate_id } = req.body;
-        const updateRows = await Product.update(req.params.id, product_name, image, description, price, size, cate_id);
+        const { product_name, description, price, size, cate_id } = req.body;
+        let image = req.body.image;  // Lấy ảnh cũ từ body nếu có
+
+        // Nếu có file mới, thay thế ảnh cũ bằng ảnh mới
+        if (req.file) {
+            image = req.file ? req.file.filename : "";
+            console.log(image)// Đặt ảnh mới là ảnh vừa tải lên
+        }
+
+        const updateRows = await Product.update(
+            req.params.id, 
+            product_name, 
+            image, 
+            description, 
+            price, 
+            size, 
+            cate_id
+        );
         
-        if (updateRows === 0) return res.status(404).json({ message: "Product not found" });
-        
+        if (updateRows === 0) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
         res.json({ message: "Product updated successfully" });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 };

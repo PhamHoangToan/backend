@@ -169,6 +169,55 @@ const getOrdersByUser = async (req, res) => {
     }
   };
 
+
+  const updateOrderStatus = (req, res) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+  
+    const validStatuses = ['Đang xử lý', 'Đang giao', 'Đã giao', 'Hủy bỏ'];
+  
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
+    }
+  
+    Order.updateOrderStatus(orderId, status, (err, results) => {
+      if (err) {
+        console.error('Error updating order status:', err);
+        return res.status(500).json({ message: 'Lỗi server' });
+      }
+  
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'Đơn hàng không tồn tại' });
+      }
+  
+      res.json({ message: 'Trạng thái đơn hàng đã được cập nhật' });
+    });
+  };
+  
+  // Controller to get orders filtered by status
+  const getOrdersByStatus = (req, res) => {
+    const { status } = req.query;
+  
+    // Nếu status là 'Tất cả', không lọc theo trạng thái
+    if (status === "Tất cả") {
+      Order.getAll((err, orders) => {
+        if (err) {
+          console.error('Lỗi khi lấy đơn hàng:', err);
+          return res.status(500).json({ message: 'Lỗi server' });
+        }
+        res.json({ orders });
+      });
+    } else {
+      Order.getOrdersByStatus(status, (err, orders) => {
+        if (err) {
+          console.error('Lỗi khi lấy đơn hàng:', err);
+          return res.status(500).json({ message: 'Lỗi server' });
+        }
+        res.json({ orders });
+      });
+    }
+  };
+  
   var accessKey = "F8BBA842ECF85";
 var secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
 const pPaymentMomo = async (req, res) => {
@@ -334,29 +383,21 @@ const getOrderDetails = async (req, res) => {
   const { orderId } = req.params;
 
   try {
-    const orderDetails = await Order.getOrderById(orderId);  // Lấy dữ liệu đơn hàng từ cơ sở dữ liệu
+    const orderDetails = await Order.getOrderById(orderId);
 
     if (!orderDetails) {
-      return res.status(404).json({ message: `Không tìm thấy đơn hàng với ID ${orderId}` });  // Xử lý trường hợp không có đơn hàng
+      return res.status(404).json({ message: `Không tìm thấy đơn hàng với ID ${orderId}` });
     }
 
-    // Kiểm tra xem orderDetails có đủ các thuộc tính cần thiết không
-    if (!orderDetails.status || !orderDetails.username) {
-      console.error("Dữ liệu đơn hàng không hợp lệ:", orderDetails);
-      return res.status(500).json({ message: "Dữ liệu đơn hàng không hợp lệ" });
-    }
-
-    console.log("Dữ liệu đơn hàng:", orderDetails);  // Log dữ liệu đơn hàng đã lấy
-
-    // Gửi dữ liệu đơn hàng dưới dạng phản hồi
     res.status(200).json({ order: orderDetails });
   } catch (error) {
     console.error("Lỗi khi lấy chi tiết đơn hàng:", error);
-    res.status(500).json({ message: "Lỗi máy chủ" });  // Xử lý lỗi không mong muốn
+    res.status(500).json({ message: "Lỗi máy chủ" });
   }
 };
 
 module.exports = { getOrders, getOrderById, createOrder, updateOrder, deleteOrder, getOrdersByUser,createFullOrder,pPaymentMomo,
   callbackMomo,
-  postTransactionStatus,getAllOrders,getOrderDetails  };
+  postTransactionStatus,getAllOrders,getOrderDetails,updateOrderStatus,
+  getOrdersByStatus,  };
 

@@ -1,14 +1,47 @@
 const db=require('../config/db')
 
 const Cart={
-    getAll: async ()=>{
-        const [rows] =await db.query (
-            `SELECT cart.cart_id, cart.user_id, cart.product_id, products.product_name, cart.quantity
-            FROM cart
-            INNER JOIN products ON cart.product_id = products.product_id`
-        );
-        return rows;
-    },
+  getAll: async () => {
+    try {
+      const query = `
+        SELECT 
+          c.user_id AS id, 
+          u.username, 
+          CONCAT('[', IFNULL(GROUP_CONCAT(
+            JSON_OBJECT(
+              'product_name', IFNULL(p.product_name, ''),
+              'image', IFNULL(p.image, ''),
+              'price', IFNULL(p.price, 0),
+              'quantity', IFNULL(c.quantity, 0)
+            ) SEPARATOR ','), ''), ']') AS products
+        FROM cart c
+        INNER JOIN users u ON c.user_id = u.user_id
+        INNER JOIN products p ON c.product_id = p.product_id
+        GROUP BY c.user_id, u.username
+      `;
+  
+      const [rows] = await db.query(query);
+  
+      return rows.map(row => {
+        console.log("Dữ liệu JSON từ MySQL:", row.products);
+        try {
+          return {
+            id: row.id,
+            username: row.username,
+            products: row.products && row.products !== '[]' ? JSON.parse(row.products) : []
+          };
+        } catch (parseError) {
+          console.error("Lỗi khi parse JSON:", parseError);
+          console.error("Chuỗi JSON bị lỗi:", row.products);
+          return { id: row.id, username: row.username, products: [] };
+        }
+      });
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách giỏ hàng:", error);
+      throw error;
+    }
+  },
+  
     getCartByUser: async (user_id) => {
         const [rows] = await db.query(`
           SELECT 

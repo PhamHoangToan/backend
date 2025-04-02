@@ -26,9 +26,7 @@ app.use("/api/auth", auth);
 app.use("/api/order", orderRoutes);
 app.use('/api', orderItemRoutes);
 app.use("/api/cate", categoryRoutes);
-
 app.use("/uploads", express.static("uploads"));
-
 app.get("/", (req, res) => {
     res.json({
       success: true,
