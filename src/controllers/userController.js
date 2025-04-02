@@ -233,45 +233,61 @@ const login=async(req, res)=>{
 }
 
 
-const clientId = process.env.GG_CLIENT_ID;
-const client = new OAuth2Client(clientId);
-async function verifyToken(token) {
-  const ticket = await client.verifyIdToken({
-    idToken: token,
-    audience: clientId,
-  });
-  const payload = ticket.getPayload();
-  return payload;
+const client = new OAuth2Client(
+  process.env.GG_CLIENT_ID,
+  process.env.GG_CLIENT_SECRET,
+  "https://frontend-self-zeta-26.vercel.app" 
+);
+
+// Function to exchange authorization code for tokens and verify the ID token
+async function verifyGoogleCode(code) {
+  try {
+    // Exchange the code for tokens
+    const { tokens } = await client.getToken(code);
+    if (!tokens.id_token) {
+      throw new Error("No ID token received");
+    }
+    console.log(tokens);
+    
+    // Verify the ID token
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    return payload;
+  } catch (error) {
+    throw new Error("Failed to verify Google code: " + error.message);
+  }
 }
+
 const googleLogin = async (req, res) => {
   try {
-
-    const { token } = req.body;
-    if (!token) {
-      return res.status(400).json({ success: false, message: "Token is required" });
-    }
-
-    // Verify Google token
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return res.status(401).json({ success: false, message: "Invalid token" });
-    }
-
-    const { email, name, sub } = payload;
+    const { code } = req.body;
     
+    if (!code) {
+      return res.status(400).json({ success: false, message: "Authorization code is required" });
+    }
+
+    // Verify the Google authorization code and get user info
+    const payload = await verifyGoogleCode(code);
+    if (!payload) {
+      return res.status(401).json({ success: false, message: "Invalid authorization code" });
+    }
+
+    const { email, name, sub: googleId } = payload;
+
     // Check if user exists
     let account = await User.getByEmail(email);
 
     // If user does not exist, create a new one
     if (!account) {
-      const hashedPassword = await bcrypt.hash(email, 10); // Hash email as a temporary password
-
       const userId = await User.create(
-        name || email.split('@')[0], // Use name if available, otherwise extract from email
+        name || email.split("@")[0], // Use name if available, otherwise extract from email
         email,
-        hashedPassword, // Save hashed password
-        '0', // Default phone number (consider setting NULL if not required)
-        '' // Empty string for address if not available
+        null, // No password for Google-authenticated users
+        "0", // Default phone number (consider setting NULL if not required)
+        "" // Empty string for address if not available
       );
 
       account = await User.getById(userId); // Fetch the newly created user
@@ -283,7 +299,7 @@ const googleLogin = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    
+
     return res.status(200).json({
       success: true,
       token: tokenJWT,
@@ -292,8 +308,8 @@ const googleLogin = async (req, res) => {
         username: account.username,
         email: account.email,
         phone: account.phone,
-        address: account.address
-      }
+        address: account.address,
+      },
     });
   } catch (error) {
     console.error("Error in Google login:", error);
