@@ -3,6 +3,7 @@ const OrderItem =require("../model/OrderItem")
 const db = require('../config/db');
 const Cart=require("../model/Cart")
 const axios = require("axios");
+const crypto = require('crypto');
 const getAllOrders = async (req, res) => {
   try {
     const orders = await getAllOrdersFromDB(); // Hàm này lấy tất cả đơn hàng từ DB
@@ -229,7 +230,7 @@ const pPaymentMomo = async (req, res) => {
   var partnerCode = "MOMO";
   var redirectUrl = "https://frontend-self-zeta-26.vercel.app";
   var ipnUrl =
-    "https://backend-web-six.vercel.app/api/order/transaction-status";
+    "https://backend-lwgs.onrender.com/api/order/transaction-status";
   var requestType = "payWithMethod";
   var amount = orderData.total_price*1000;
   
