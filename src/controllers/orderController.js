@@ -2,7 +2,7 @@ const Order =require("../model/Order")
 const OrderItem =require("../model/OrderItem")
 const db = require('../config/db');
 const Cart=require("../model/Cart")
-
+const axios = require("axios");
 const getAllOrders = async (req, res) => {
   try {
     const orders = await getAllOrdersFromDB(); // Hàm này lấy tất cả đơn hàng từ DB
