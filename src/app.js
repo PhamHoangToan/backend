@@ -18,7 +18,9 @@ const auth = require("./routes/auth");
 const orderRoutes = require("./routes/orderRoutes");
 const orderItemRoutes = require('./routes/OrderItemRoutes');
 const categoryRoutes = require("./routes/cateRoutes");
+const adminRoutes =require("./routes/adminRoutes");
 // Use routes
+app.use("/api/admin", adminRoutes)
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);

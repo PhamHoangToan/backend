@@ -52,49 +52,49 @@ const deleteAdmin = async (req, res) => {
   }
 };
 //dang ky
-const register=async(req, res)=>{
+const register = async (req, res) => {
   try {
-    const {name, email, password}=req.body;
-    // kiểm tra tồn tại email
-    const exitingadmin=await Admin.getByEmail(email);
-    if(exitingadmin){
-      return res.status(400).json({message:"Email already exits"});
+    const { name, email, password } = req.body;
+
+    const existingAdmin = await Admin.getByEmail(email);
+    if (existingAdmin) {
+      return res.status(400).json({ success: false, message: "Email already exists" });
     }
 
-    //Mã hóa mật khẩu
-    const salt=await bcrypt.genSalt(10);
-     const hashedPassword=await bcrypt.hash(password,salt);
-     //
-     const adminID=await Admin.create(name, email, hashedPassword);
-     res.status(201).json({id: adminID, message:"admin registered successfully"});
-     
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    console.log("Hashed password:", hashedPassword);
+
+    const adminID = await Admin.create(name, email, hashedPassword);
+    res.status(201).json({ success: true, id: adminID, message: "Admin registered successfully" });
   } catch (error) {
-    res.status(500).json({error:error.message});
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-//dang nhap
+
 const login=async(req, res)=>{
   try {
     const {email, password}=req.body;
-    //kiem tra ton tai admin
+    //kiem tra ton tai user
     const admin=await Admin.getByEmail(email);
+    console.log("admin: ",admin)
     if(!admin){
       return res.status(400).json({message:"Invalid email or password"});
     }
     //kiem tra password
     const isMatch=await bcrypt.compare(password, admin.password);
+    console.log("mach: ",isMatch)
     if(!isMatch){
       return res.status(400).json({message:"Invalid email or password"})
     }
 
     //Tao JWT Token
     const token=jwt.sign({admin_id: admin.admin_id, email: admin.email}, process.env.JWT_SECRET, {expiresIn:"1h"});
-    res.json({token, admin:{id: admin.admin_id, adminname: admin.adminname, email:admin.email}});
+    res.json({token, admin:{id: admin.admin_id, name: admin.name, email:admin.email, }});
   } catch (error) {
     res.status(500).json({error:error.message});
   }
 }
-
 
 module.exports = { getAdmins, getAdminById, createAdmin, updateAdmin, deleteAdmin, register, login };

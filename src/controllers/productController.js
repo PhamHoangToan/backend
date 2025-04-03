@@ -2,6 +2,11 @@ const Product = require("../model/Product");
 const multer = require("multer");
 const path = require("path");
 const db = require("../config/db");
+const fs = require("fs");
+
+
+
+
 const getProduct = async (req, res) => {
     try {
         const products = await Product.getAll();
@@ -20,6 +25,7 @@ const getProductById = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

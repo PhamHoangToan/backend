@@ -15,18 +15,18 @@ const Admin = {
     const [rows]=await db.query("SELECT * FROM admin WHERE email=?", [email]);
     return rows[0];
   },
-
-  create: async (name, email, password) => {
-    const [result] = await db.query(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, password]
-    );
-    return result.insertId;
-  },
+   create: async (username, email, password) => {
+      const [result] = await db.query(
+        "INSERT INTO admin (name, email, password) VALUES (?, ?, ?)",
+        [username, email, password]
+      );
+      return result.insertId;
+    },
+  
 
   update: async (id, name, email,password) => {
     const [result] = await db.query(
-      "UPDATE users SET name = ?, email = ?,password=? WHERE admin_id = ?",
+      "UPDATE admin SET name = ?, email = ?,password=? WHERE admin_id = ?",
       [name, email,password, id]
     );
     return result.affectedRows;

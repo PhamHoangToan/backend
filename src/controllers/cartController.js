@@ -1,5 +1,7 @@
 const Cart=require("../model/Cart")
 
+const path = require("path");
+const fs = require("fs");
 
 const getCart  =async(req, res)=>{
     try {
@@ -9,6 +11,7 @@ const getCart  =async(req, res)=>{
         res.status(500).json({error: error.message});
     }
 };
+
 
 // const getCartByUser = async (req, res) => {
 //     try {
