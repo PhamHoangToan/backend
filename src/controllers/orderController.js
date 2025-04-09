@@ -171,29 +171,40 @@ const getOrdersByUser = async (req, res) => {
   };
 
 
-  const updateOrderStatus = (req, res) => {
+  const updateOrderStatus = async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
   
-    const validStatuses = ['Đang xử lý', 'Đang giao', 'Đã giao', 'Hủy bỏ'];
+    console.log('👉 Đã nhận yêu cầu update:', orderId, status); // ✅ Log 1
   
+    const validStatuses = ['Đang xử lý', 'Đang giao', 'Đã giao', 'Hủy bỏ'];
     if (!validStatuses.includes(status)) {
+      console.log('❌ Trạng thái không hợp lệ'); // ✅ Log 2
       return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
     }
   
-    Order.updateOrderStatus(orderId, status, (err, results) => {
-      if (err) {
-        console.error('Error updating order status:', err);
-        return res.status(500).json({ message: 'Lỗi server' });
-      }
+    try {
+      console.log('🟡 Bắt đầu gọi Order.updateOrderStatus...'); // ✅ Log 3
+      const results = await Order.updateOrderStatus(orderId, status);
+      console.log('🟢 Kết quả update:', results); // ✅ Log 4
   
       if (results.affectedRows === 0) {
+        console.log('⚠️ Không tìm thấy đơn hàng'); // ✅ Log 5
         return res.status(404).json({ message: 'Đơn hàng không tồn tại' });
       }
   
-      res.json({ message: 'Trạng thái đơn hàng đã được cập nhật' });
-    });
+      console.log('✔️ Status updated for order:', orderId); // ✅ Log 6
+      res.status(200).json({
+        message: 'Trạng thái đơn hàng đã được cập nhật',
+        orderId,
+        newStatus: status
+      });
+    } catch (error) {
+      console.error('❌ Lỗi cập nhật trạng thái:', error); // ✅ Log 7
+      res.status(500).json({ message: 'Lỗi server' });
+    }
   };
+  
   
   // Controller to get orders filtered by status
   const getOrdersByStatus = (req, res) => {

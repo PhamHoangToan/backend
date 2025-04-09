@@ -118,15 +118,15 @@ WHERE od.order_id = ?;
     }
   },
 
-   getOrdersByStatus :async (status, callback) => {
-    let query = 'SELECT * FROM orders';
+  getOrdersByStatus: async (status, callback) => {
+    let query = "SELECT * FROM orders";
     const queryParams = [];
-    
+
     if (status) {
-      query += ' WHERE status = ?';
+      query += " WHERE status = ?";
       queryParams.push(status);
     }
-  
+
     connection.query(query, queryParams, (err, results) => {
       if (err) {
         return callback(err, null);
@@ -134,18 +134,23 @@ WHERE od.order_id = ?;
       callback(null, results);
     });
   },
-  
+
   // Function to update the order status
-  updateOrderStatus :async (orderId, status, callback) => {
+  updateOrderStatus: async (orderId, status) => {
     const query = 'UPDATE orders SET status = ? WHERE order_id = ?';
-    
-    db.query(query, [status, orderId], (err, results) => {
-      if (err) {
-        return callback(err, null);
-      }
-      callback(null, results);
-    });
-  },
+  
+    console.log('⚙️ Đang thực hiện query SQL:', query);
+    console.log('🛠 Tham số truyền vào:', status, orderId);
+  
+    try {
+      const [results] = await db.query(query, [status, Number(orderId)]);
+      console.log('✅ Kết quả SQL:', results);
+      return results;
+    } catch (err) {
+      console.error('❌ Lỗi SQL:', err);
+      throw err;
+    }
+  }
   
 };
 
