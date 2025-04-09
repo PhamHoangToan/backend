@@ -139,7 +139,7 @@ WHERE od.order_id = ?;
   updateOrderStatus :async (orderId, status, callback) => {
     const query = 'UPDATE orders SET status = ? WHERE order_id = ?';
     
-    connection.query(query, [status, orderId], (err, results) => {
+    db.query(query, [status, orderId], (err, results) => {
       if (err) {
         return callback(err, null);
       }
